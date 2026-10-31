@@ -519,6 +519,113 @@ button {
   font-size: 13px;
 }
 
+/* Token contract address */
+.ca {
+  margin-top: var(--space-5);
+  max-width: 100%;
+}
+.ca__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 560px;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+}
+.ca__label {
+  flex: none;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-s);
+  background: var(--grad-soft);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.ca__addr {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  text-align: left;
+  cursor: copy;
+  overflow-wrap: anywhere;
+  color: var(--text-2);
+  font-size: 13.5px;
+  user-select: all;
+}
+.ca__copy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
+}
+.ca__copy:hover {
+  border-color: rgba(167, 139, 250, 0.6);
+  background: var(--surface-3);
+}
+.ca__addr:hover {
+  color: var(--text);
+}
+.ca-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-2);
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+.ca-pill:hover {
+  color: var(--text);
+  border-color: rgba(167, 139, 250, 0.6);
+}
+.ca-pill__label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.ca__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+  padding-left: var(--space-1);
+  font-size: 13px;
+}
+.ca__links a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-strong);
+}
+.ca__links a:hover {
+  color: var(--text);
+}
+.ca--compact {
+  margin-top: var(--space-5);
+}
+
 /* Hero diagram */
 .diagram {
   position: relative;

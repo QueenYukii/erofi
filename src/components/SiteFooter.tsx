@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Logo } from './Logo';
+import { ContractAddress } from './ContractAddress';
 
 const X_URL = 'https://x.com/eroFinance';
 
@@ -33,6 +34,7 @@ export function SiteFooter() {
             </a>
           </nav>
         </div>
+        <ContractAddress compact />
         <p className="site-footer__legal">
           Non-custodial. Transactions are final once confirmed. Not financial advice. © {new Date().getFullYear()}{' '}
           eroFi.

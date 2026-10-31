@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
+import { CopyCaButton } from './ContractAddress';
 import { WalletButton } from './wallet/WalletButton';
 
 const NAV = [
@@ -28,6 +29,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="site-header__actions">
+          <CopyCaButton />
           {inApp ? (
             <WalletButton />
           ) : (

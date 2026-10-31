@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { RelayDiagram } from '@/components/RelayDiagram';
 import { ChainIcon } from '@/components/ChainIcon';
+import { ContractAddress } from '@/components/ContractAddress';
 import { CHAINS, SOLANA_RELAY_CHAIN_ID, tokensFor } from '@/config/chains';
 
 const STEPS = [
@@ -106,6 +107,7 @@ export default function HomePage() {
                 How it works
               </Link>
             </div>
+            <ContractAddress />
             <div className="hero__facts">
               <div>
                 <div className="fact__value num">{CHAINS.length}</div>
