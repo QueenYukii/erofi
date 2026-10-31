@@ -131,7 +131,8 @@ export function RelayCard() {
       if (e.type === 'submitted') {
         const i = idx(e.stepId);
         if (i !== -1) next[i] = { ...next[i], state: 'active', meta: 'Waiting for confirmation', txHash: e.txHash, chainId: e.chainId };
-        if (e.stepId === 'deposit') upsertActivity({ id: activityId, originTx: e.txHash });
+        if (e.stepId === 'deposit')
+          upsertActivity({ id: activityId, originTx: e.txHash, requestId: e.requestId, status: 'waiting' });
       }
       if (e.type === 'confirmed') {
         const i = idx(e.stepId);

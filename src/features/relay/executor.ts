@@ -44,7 +44,7 @@ export interface ExecutionContext {
 export type ExecutionEvent =
   | { type: 'step'; stepId: string; description: string; index: number; total: number }
   | { type: 'awaiting_signature'; stepId: string }
-  | { type: 'submitted'; stepId: string; txHash: string; chainId: number }
+  | { type: 'submitted'; stepId: string; txHash: string; chainId: number; requestId?: string }
   | { type: 'confirmed'; stepId: string; txHash: string }
   | { type: 'relaying'; requestId: string; status: RelayStatusResponse['status'] }
   | { type: 'done'; requestId?: string; status: RelayStatusResponse };
@@ -102,7 +102,7 @@ async function sendEvm(ctx: ExecutionContext, data: EvmTxData) {
 
 async function confirmEvm(ctx: ExecutionContext, hash: Hex, chainId: number) {
   const receipt = await waitForTransactionReceipt(ctx.wagmiConfig, { hash, chainId: chainId as never, confirmations: 1 });
-  if (receipt.status !== 'success') throw new Error('The transaction reverted on-chain.');
+  if (receipt.status !== 'success') throw new OnChainError('The transaction reverted on-chain.');
 }
 
 async function sendSvm(ctx: ExecutionContext, data: SvmTxData) {
@@ -136,11 +136,25 @@ async function sendSvm(ctx: ExecutionContext, data: SvmTxData) {
   return signer.signAndSendTransaction(new VersionedTransaction(message));
 }
 
+/** Thrown only when a transaction is known to have failed on-chain. */
+class OnChainError extends Error {}
+
+/**
+ * Polls the signature over plain HTTP. `confirmTransaction` needs a websocket,
+ * which many RPCs (including AppKit's default) don't offer — it then throws
+ * even though the deposit landed. If confirmation can't be observed in time we
+ * return and let the bridge status poll decide the outcome.
+ */
 async function confirmSvm(ctx: ExecutionContext, signature: string) {
   const { connection } = ctx.solana!;
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
-  const res = await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
-  if (res.value.err) throw new Error('The Solana transaction failed on-chain.');
+  const deadline = Date.now() + 60_000;
+  while (Date.now() < deadline) {
+    const { value } = await connection.getSignatureStatuses([signature]).catch(() => ({ value: [null] }));
+    const s = value[0];
+    if (s?.err) throw new OnChainError('The Solana transaction failed on-chain.');
+    if (s?.confirmationStatus === 'confirmed' || s?.confirmationStatus === 'finalized') return;
+    await sleep(1500, ctx.signal);
+  }
 }
 
 async function handleSignature(ctx: ExecutionContext, data: SignatureData) {
@@ -208,6 +222,9 @@ export async function pollUntilFinal(
 export async function executeQuote(quote: RelayQuote, ctx: ExecutionContext) {
   const steps = quote.steps.filter((s) => s.items.some((i) => i.status !== 'complete'));
   let requestId: string | undefined;
+  // Once a deposit is broadcast, only a known on-chain failure ends the flow;
+  // anything else (RPC hiccups, timeouts) falls through to status polling.
+  let deposited = false;
 
   try {
     for (const [index, step] of steps.entries()) {
@@ -225,21 +242,24 @@ export async function executeQuote(quote: RelayQuote, ctx: ExecutionContext) {
 
         if (isSvmData(item.data)) {
           const sig = await sendSvm(ctx, item.data);
-          ctx.onEvent({ type: 'submitted', stepId: step.id, txHash: sig, chainId: 792703809 });
+          deposited = true;
+          ctx.onEvent({ type: 'submitted', stepId: step.id, txHash: sig, chainId: 792703809, requestId });
           await confirmSvm(ctx, sig);
           ctx.onEvent({ type: 'confirmed', stepId: step.id, txHash: sig });
         } else {
           const data = item.data as EvmTxData;
           const hash = await sendEvm(ctx, data);
-          ctx.onEvent({ type: 'submitted', stepId: step.id, txHash: hash, chainId: data.chainId });
+          if (step.id === 'deposit') deposited = true;
+          ctx.onEvent({ type: 'submitted', stepId: step.id, txHash: hash, chainId: data.chainId, requestId });
           await confirmEvm(ctx, hash, data.chainId);
           ctx.onEvent({ type: 'confirmed', stepId: step.id, txHash: hash });
         }
       }
     }
   } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') throw err;
     if (isUserRejection(err)) throw new UserRejectedError();
-    throw err;
+    if (!deposited || !requestId || err instanceof OnChainError) throw err;
   }
 
   if (!requestId) {
