@@ -1,4 +1,4 @@
-import { isAddress } from 'viem';
+import { isAddress, sha256 } from 'viem';
 import { PublicKey } from '@solana/web3.js';
 import type { ChainVm } from '@/config/chains';
 
@@ -14,8 +14,42 @@ export const isValidSolanaAddress = (value: string) => {
 
 export const isValidEvmAddress = (value: string) => isAddress(value, { strict: false });
 
+const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+const base58Decode = (value: string): Uint8Array | null => {
+  let n = 0n;
+  for (const ch of value) {
+    const i = BASE58.indexOf(ch);
+    if (i === -1) return null;
+    n = n * 58n + BigInt(i);
+  }
+  const bytes: number[] = [];
+  while (n > 0n) {
+    bytes.unshift(Number(n % 256n));
+    n /= 256n;
+  }
+  for (const ch of value) {
+    if (ch !== '1') break;
+    bytes.unshift(0);
+  }
+  return Uint8Array.from(bytes);
+};
+
+/** TRON base58check address: 0x41 prefix + 20-byte account + 4-byte double-SHA256 checksum. */
+export const isValidTronAddress = (value: string) => {
+  if (!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(value)) return false;
+  const bytes = base58Decode(value);
+  if (!bytes || bytes.length !== 25 || bytes[0] !== 0x41) return false;
+  const payload = bytes.slice(0, 21);
+  const checksum = sha256(sha256(payload, 'bytes'), 'bytes').slice(0, 4);
+  return checksum.every((b, i) => b === bytes[21 + i]);
+};
+
 export const isValidAddressFor = (vm: ChainVm, value: string) =>
-  vm === 'svm' ? isValidSolanaAddress(value) : isValidEvmAddress(value);
+  vm === 'svm' ? isValidSolanaAddress(value) : vm === 'tvm' ? isValidTronAddress(value) : isValidEvmAddress(value);
+
+/** Human name of each VM's address format, for labels and errors. */
+export const VM_LABEL: Record<ChainVm, string> = { evm: 'EVM', svm: 'Solana', tvm: 'TRON' };
 
 /**
  * Placeholder addresses used only to fetch an *indicative* quote before a
@@ -25,4 +59,6 @@ export const isValidAddressFor = (vm: ChainVm, value: string) =>
 export const PREVIEW_ADDRESS: Record<ChainVm, string> = {
   evm: '0x000000000000000000000000000000000000dEaD',
   svm: 'GTtzwxqy67xx9DVESJjx28TgXqpc8xTqtiytgNMaQBTE',
+  // 0x41 + 0x1111…1111: a plain account (Relay rejects the TRX sentinel and blacklisted burn addresses)
+  tvm: 'TBXSw8fM4jpQkGc6zZjsVABFpVN7UvXPdV',
 };

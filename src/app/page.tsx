@@ -13,7 +13,7 @@ import {
 import { RelayDiagram } from '@/components/RelayDiagram';
 import { ChainIcon } from '@/components/ChainIcon';
 import { ContractAddress } from '@/components/ContractAddress';
-import { CHAINS, SOLANA_RELAY_CHAIN_ID, tokensFor } from '@/config/chains';
+import { CHAINS, RECEIVE_ONLY_CHAIN_IDS, SOLANA_RELAY_CHAIN_ID, tokensFor } from '@/config/chains';
 
 const STEPS = [
   {
@@ -95,7 +95,7 @@ export default function HomePage() {
               Move value off Solana <span className="soft">in seconds,</span> not minutes.
             </h1>
             <p className="lede">
-              eroFi bridges SOL, USDC and USDT from Solana to Ethereum, BNB Chain, Base, Arbitrum and more. One
+              eroFi bridges SOL, USDC and USDT from Solana to Ethereum, BNB Chain, Base, Arbitrum, TRON and more. One
               signature, every fee shown up front, settled in seconds by a network of professional solvers.
             </p>
             <div className="hero__cta">
@@ -185,6 +185,11 @@ export default function HomePage() {
                 {c.id === SOLANA_RELAY_CHAIN_ID && (
                   <span className="badge badge--accent" style={{ marginLeft: 'auto' }}>
                     Home
+                  </span>
+                )}
+                {RECEIVE_ONLY_CHAIN_IDS.includes(c.id) && (
+                  <span className="badge" style={{ marginLeft: 'auto' }}>
+                    Receive only
                   </span>
                 )}
               </div>

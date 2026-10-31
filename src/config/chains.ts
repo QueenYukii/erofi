@@ -2,14 +2,17 @@
  * Single source of truth for every chain and token eroFi supports.
  *
  * Chain IDs follow Relay's convention: EVM chains use their normal chain ID,
- * Solana uses Relay's custom ID 792703809.
+ * Solana uses Relay's custom ID 792703809 and TRON 728126428.
+ *
+ * TRON is destination-only: no TRON wallet is wired up, so users paste a
+ * TRON recipient address and always send from Solana or EVM.
  *
  * The token list below is a curated default. Route availability is always
  * confirmed at runtime by the Relay quote — if Relay can't route a pair, the
  * quote fails and the UI says so.
  */
 
-export type ChainVm = 'evm' | 'svm';
+export type ChainVm = 'evm' | 'svm' | 'tvm';
 
 export interface LugiaChain {
   /** Relay chain id */
@@ -39,6 +42,9 @@ export interface LugiaToken {
 export const SOLANA_RELAY_CHAIN_ID = 792703809;
 export const EVM_NATIVE = '0x0000000000000000000000000000000000000000';
 export const SOL_NATIVE = '11111111111111111111111111111111';
+export const TRON_RELAY_CHAIN_ID = 728126428;
+/** Relay's sentinel address for native TRX */
+export const TRX_NATIVE = 'T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb';
 
 const evmExplorer = (base: string) => ({
   explorerTx: (h: string) => `${base}/tx/${h}`,
@@ -117,7 +123,21 @@ export const CHAINS: LugiaChain[] = [
     ...evmExplorer('https://polygonscan.com'),
     tint: '#8247E5',
   },
+  {
+    id: TRON_RELAY_CHAIN_ID,
+    name: 'TRON',
+    short: 'TRX',
+    vm: 'tvm',
+    caipNetworkId: 'tron:0x2b6653dc',
+    nativeSymbol: 'TRX',
+    explorerTx: (h) => `https://tronscan.org/#/transaction/${h.replace(/^0x/, '')}`,
+    explorerAddress: (a) => `https://tronscan.org/#/address/${a}`,
+    tint: '#FF060A',
+  },
 ];
+
+/** Chains that can only receive: there is no wallet to send from them. */
+export const RECEIVE_ONLY_CHAIN_IDS = [TRON_RELAY_CHAIN_ID];
 
 export const TOKENS: LugiaToken[] = [
   // Solana
@@ -153,6 +173,10 @@ export const TOKENS: LugiaToken[] = [
   { chainId: 137, address: EVM_NATIVE, symbol: 'POL', name: 'Polygon', decimals: 18, isNative: true },
   { chainId: 137, address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', symbol: 'USDC', name: 'USD Coin', decimals: 6 },
   { chainId: 137, address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', symbol: 'USDT', name: 'Tether USD', decimals: 6 },
+
+  // TRON (receive only)
+  { chainId: TRON_RELAY_CHAIN_ID, address: TRX_NATIVE, symbol: 'TRX', name: 'TRON', decimals: 6, isNative: true },
+  { chainId: TRON_RELAY_CHAIN_ID, address: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', symbol: 'USDT', name: 'Tether USD', decimals: 6 },
 ];
 
 export const getChain = (id: number): LugiaChain => {
@@ -179,6 +203,7 @@ const TOKEN_LOGOS: Record<string, string> = {
   POL: '/tokens/pol.png',
   USDC: '/tokens/usdc.png',
   USDT: '/tokens/usdt.png',
+  TRX: '/tokens/trx.png',
 };
 
 export const tokenLogoUrl = (symbol: string): string | undefined => TOKEN_LOGOS[symbol.toUpperCase()];

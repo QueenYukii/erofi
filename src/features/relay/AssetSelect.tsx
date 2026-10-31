@@ -85,7 +85,7 @@ export function AssetSelect({ label, value, onChange, disabledChainIds = [] }: P
                         <span>
                           <span className="option__name">{c.name}</span>
                           <br />
-                          <span className="option__sub">{c.vm === 'svm' ? 'SVM' : 'EVM'}</span>
+                          <span className="option__sub">{c.vm.toUpperCase()}</span>
                         </span>
                       </button>
                     );

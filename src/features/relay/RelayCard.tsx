@@ -5,8 +5,8 @@ import { AlertTriangle, ArrowDownUp, CheckCircle2, Info, Pencil, Wallet } from '
 import { formatUnits, parseUnits } from 'viem';
 import { useQueryClient } from '@tanstack/react-query';
 import { wagmiConfig } from '@/config/appkit';
-import { findToken, getChain, SOLANA_RELAY_CHAIN_ID, tokensFor, type LugiaToken } from '@/config/chains';
-import { PREVIEW_ADDRESS, isValidAddressFor } from '@/lib/address';
+import { findToken, getChain, RECEIVE_ONLY_CHAIN_IDS, SOLANA_RELAY_CHAIN_ID, tokensFor, type LugiaToken } from '@/config/chains';
+import { PREVIEW_ADDRESS, VM_LABEL, isValidAddressFor } from '@/lib/address';
 import { formatDecimalString, formatTokenAmount, formatUsd, sanitizeAmountInput, truncateAddress } from '@/lib/format';
 import { AssetSelect } from './AssetSelect';
 import { QuoteDetails } from './QuoteDetails';
@@ -57,6 +57,7 @@ export function RelayCard() {
 
   const fromChain = getChain(from.chainId);
   const toChain = getChain(to.chainId);
+  const toReceiveOnly = RECEIVE_ONLY_CHAIN_IDS.includes(to.chainId);
 
   // ── Addresses ────────────────────────────────────────────────
   const originAddress = mounted ? w.addressFor(fromChain.vm) : undefined;
@@ -243,7 +244,7 @@ export function RelayCard() {
     if (!mounted) return { label: 'Loading…', disabled: true };
     if (phase === 'running') return { label: 'Bridging…', disabled: true, busy: true };
     if (!originAddress)
-      return { label: `Connect ${fromChain.vm === 'svm' ? 'Solana' : 'EVM'} wallet`, onClick: () => w.connect(fromChain.vm), icon: true };
+      return { label: `Connect ${VM_LABEL[fromChain.vm]} wallet`, onClick: () => w.connect(fromChain.vm), icon: true };
     if (sameAsset) return { label: 'Choose a different destination', disabled: true };
     if (!amountRaw) return { label: 'Enter an amount', disabled: true };
     if (insufficient) return { label: `Insufficient ${from.symbol}`, disabled: true };
@@ -303,6 +304,7 @@ export function RelayCard() {
             <AssetSelect
               label="Send from"
               value={from}
+              disabledChainIds={RECEIVE_ONLY_CHAIN_IDS}
               onChange={(t) => {
                 setFrom(t);
                 setAmountInput('');
@@ -319,7 +321,13 @@ export function RelayCard() {
         </div>
 
         <div className="flip">
-          <button type="button" onClick={flip} aria-label="Swap direction" disabled={disableInputs}>
+          <button
+            type="button"
+            onClick={flip}
+            aria-label="Swap direction"
+            title={toReceiveOnly ? `${toChain.name} is receive-only` : undefined}
+            disabled={disableInputs || toReceiveOnly}
+          >
             <ArrowDownUp aria-hidden="true" />
           </button>
         </div>
@@ -353,18 +361,20 @@ export function RelayCard() {
               ) : (
                 <span style={{ color: 'var(--warn)' }}>recipient needed</span>
               )}
-              <button
-                type="button"
-                className="link-btn"
-                style={{ marginLeft: 8 }}
-                onClick={() => setCustomRecipient(customRecipient === null ? autoRecipient ?? '' : null)}
-                disabled={disableInputs}
-                aria-expanded={customRecipient !== null}
-                aria-controls="recipient-field"
-              >
-                <Pencil aria-hidden="true" style={{ width: 11, height: 11, display: 'inline', verticalAlign: '-1px' }} />{' '}
-                {customRecipient === null ? 'Edit' : 'Use wallet'}
-              </button>
+              {!toReceiveOnly && (
+                <button
+                  type="button"
+                  className="link-btn"
+                  style={{ marginLeft: 8 }}
+                  onClick={() => setCustomRecipient(customRecipient === null ? autoRecipient ?? '' : null)}
+                  disabled={disableInputs}
+                  aria-expanded={customRecipient !== null}
+                  aria-controls="recipient-field"
+                >
+                  <Pencil aria-hidden="true" style={{ width: 11, height: 11, display: 'inline', verticalAlign: '-1px' }} />{' '}
+                  {customRecipient === null ? 'Edit' : 'Use wallet'}
+                </button>
+              )}
             </span>
           </div>
         </div>
@@ -374,9 +384,9 @@ export function RelayCard() {
           <div className="field" id="recipient-field" style={{ padding: '4px 4px 0' }}>
             <label className="field__label" htmlFor="recipient">
               <span>Recipient on {toChain.name}</span>
-              {!autoRecipient && (
+              {!autoRecipient && !toReceiveOnly && (
                 <button type="button" className="link-btn" onClick={() => w.connect(toChain.vm)}>
-                  Connect {toChain.vm === 'svm' ? 'Solana' : 'EVM'} wallet
+                  Connect {VM_LABEL[toChain.vm]} wallet
                 </button>
               )}
             </label>
@@ -385,7 +395,7 @@ export function RelayCard() {
               className="input"
               spellCheck={false}
               autoComplete="off"
-              placeholder={toChain.vm === 'svm' ? 'Solana address' : '0x… address'}
+              placeholder={{ svm: 'Solana address', evm: '0x… address', tvm: 'T… TRON address' }[toChain.vm]}
               value={customRecipient ?? ''}
               disabled={disableInputs}
               aria-invalid={recipientError}
@@ -394,7 +404,7 @@ export function RelayCard() {
             />
             {recipientError ? (
               <span className="field__error" id="recipient-hint" role="alert">
-                That is not a valid {toChain.vm === 'svm' ? 'Solana' : 'EVM'} address.
+                That is not a valid {VM_LABEL[toChain.vm]} address.
               </span>
             ) : (
               <span className="field__hint" id="recipient-hint">

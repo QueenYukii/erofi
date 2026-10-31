@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { isSupportedChain } from '@/config/chains';
+import { RECEIVE_ONLY_CHAIN_IDS, isSupportedChain } from '@/config/chains';
 import { relayFetch } from '@/lib/relay-server';
 
 export const dynamic = 'force-dynamic';
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     typeof destinationChainId !== 'number' ||
     !isSupportedChain(originChainId) ||
     !isSupportedChain(destinationChainId) ||
+    RECEIVE_ONLY_CHAIN_IDS.includes(originChainId) ||
     !isStr(amount, 80) ||
     !/^\d+$/.test(amount) ||
     amount === '0'

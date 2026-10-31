@@ -38,8 +38,10 @@ export function useWallets() {
     };
   }, [walletProvider]);
 
-  const addressFor = (vm: ChainVm) => (vm === 'svm' ? sol.address : evm.address);
-  const isConnectedFor = (vm: ChainVm) => (vm === 'svm' ? Boolean(sol.isConnected && sol.address) : evm.isConnected);
+  // TRON has no connected wallet: its recipient is always typed in.
+  const addressFor = (vm: ChainVm) => (vm === 'svm' ? sol.address : vm === 'evm' ? evm.address : undefined);
+  const isConnectedFor = (vm: ChainVm) =>
+    vm === 'svm' ? Boolean(sol.isConnected && sol.address) : vm === 'evm' ? evm.isConnected : false;
 
   const connect = (vm?: ChainVm) =>
     open(vm ? { view: 'Connect', namespace: vm === 'svm' ? 'solana' : 'eip155' } : { view: 'Connect' });
