@@ -1,0 +1,42 @@
+{
+  "name": "erofi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "eroFi — relay assets from Solana to Ethereum, BNB Chain, Base, Arbitrum and more.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "check:setup": "node scripts/check-setup.mjs"
+  },
+  "dependencies": {
+    "@reown/appkit": "^1.7.0",
+    "@reown/appkit-adapter-solana": "^1.7.0",
+    "@reown/appkit-adapter-wagmi": "^1.7.0",
+    "@reown/appkit-controllers": "1.8.24",
+    "@solana/web3.js": "^1.98.0",
+    "@tanstack/react-query": "^5.59.0",
+    "@wagmi/core": "2.22.1",
+    "buffer": "^6.0.3",
+    "lucide-react": "^0.460.0",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
+    "viem": "^2.21.0",
+    "wagmi": "^2.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.6.0"
+  },
+  "overrides": {
+    "@reown/appkit-adapter-wagmi": {
+      "@wagmi/connectors": "6.2.0"
+    }
+  }
+}
