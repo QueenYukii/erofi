@@ -395,7 +395,7 @@ export function RelayCard() {
               className="input"
               spellCheck={false}
               autoComplete="off"
-              placeholder={{ svm: 'Solana address', evm: '0x… address', tvm: 'T… TRON address' }[toChain.vm]}
+              placeholder={{ svm: 'Solana address', evm: '0x… address', tvm: 'T… TRON address', ton: 'UQ… or EQ… TON address' }[toChain.vm]}
               value={customRecipient ?? ''}
               disabled={disableInputs}
               aria-invalid={recipientError}
@@ -408,6 +408,8 @@ export function RelayCard() {
               </span>
             ) : (
               <span className="field__hint" id="recipient-hint">
+                {toChain.vm === 'ton' &&
+                  'Use your own TON wallet. Exchange deposit addresses that need a memo will not be credited. '}
                 Double-check this address. Transfers to the wrong address cannot be reversed.
               </span>
             )}

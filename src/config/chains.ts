@@ -2,17 +2,17 @@
  * Single source of truth for every chain and token eroFi supports.
  *
  * Chain IDs follow Relay's convention: EVM chains use their normal chain ID,
- * Solana uses Relay's custom ID 792703809 and TRON 728126428.
+ * Solana uses Relay's custom ID 792703809, TRON 728126428 and TON 224235520.
  *
- * TRON is destination-only: no TRON wallet is wired up, so users paste a
- * TRON recipient address and always send from Solana or EVM.
+ * TRON and TON are destination-only: no wallet for them is wired up, so users
+ * paste a recipient address and always send from Solana or EVM.
  *
  * The token list below is a curated default. Route availability is always
  * confirmed at runtime by the Relay quote — if Relay can't route a pair, the
  * quote fails and the UI says so.
  */
 
-export type ChainVm = 'evm' | 'svm' | 'tvm';
+export type ChainVm = 'evm' | 'svm' | 'tvm' | 'ton';
 
 export interface LugiaChain {
   /** Relay chain id */
@@ -45,6 +45,9 @@ export const SOL_NATIVE = '11111111111111111111111111111111';
 export const TRON_RELAY_CHAIN_ID = 728126428;
 /** Relay's sentinel address for native TRX */
 export const TRX_NATIVE = 'T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb';
+export const TON_RELAY_CHAIN_ID = 224235520;
+/** Relay's sentinel address for native Toncoin */
+export const TON_NATIVE = 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c';
 
 const evmExplorer = (base: string) => ({
   explorerTx: (h: string) => `${base}/tx/${h}`,
@@ -134,10 +137,21 @@ export const CHAINS: LugiaChain[] = [
     explorerAddress: (a) => `https://tronscan.org/#/address/${a}`,
     tint: '#FF060A',
   },
+  {
+    id: TON_RELAY_CHAIN_ID,
+    name: 'TON',
+    short: 'TON',
+    vm: 'ton',
+    caipNetworkId: 'ton:-239',
+    nativeSymbol: 'TON',
+    explorerTx: (h) => `https://tonviewer.com/transaction/${h.replace(/^0x/, '')}`,
+    explorerAddress: (a) => `https://tonviewer.com/${a}`,
+    tint: '#0098EA',
+  },
 ];
 
 /** Chains that can only receive: there is no wallet to send from them. */
-export const RECEIVE_ONLY_CHAIN_IDS = [TRON_RELAY_CHAIN_ID];
+export const RECEIVE_ONLY_CHAIN_IDS = [TRON_RELAY_CHAIN_ID, TON_RELAY_CHAIN_ID];
 
 export const TOKENS: LugiaToken[] = [
   // Solana
@@ -177,6 +191,9 @@ export const TOKENS: LugiaToken[] = [
   // TRON (receive only)
   { chainId: TRON_RELAY_CHAIN_ID, address: TRX_NATIVE, symbol: 'TRX', name: 'TRON', decimals: 6, isNative: true },
   { chainId: TRON_RELAY_CHAIN_ID, address: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', symbol: 'USDT', name: 'Tether USD', decimals: 6 },
+
+  // TON (receive only; Relay routes native Toncoin only)
+  { chainId: TON_RELAY_CHAIN_ID, address: TON_NATIVE, symbol: 'TON', name: 'Toncoin', decimals: 9, isNative: true },
 ];
 
 export const getChain = (id: number): LugiaChain => {
@@ -204,6 +221,7 @@ const TOKEN_LOGOS: Record<string, string> = {
   USDC: '/tokens/usdc.png',
   USDT: '/tokens/usdt.png',
   TRX: '/tokens/trx.png',
+  TON: '/tokens/ton.png',
 };
 
 export const tokenLogoUrl = (symbol: string): string | undefined => TOKEN_LOGOS[symbol.toUpperCase()];
